@@ -21,4 +21,14 @@ Coming soon.
 
 ## Reference
 
-Coming soon.
+@inbook{10.1145/3672608.3707879,
+  author = {Roque dos Santos, N\'{\i}colas and Minatel, Diego and Dem\'{e}trius Baria Valejo, Alan and de Andrade Lopes, Alneu},
+  title = {One-mode Projection of Bipartite Graphs for Text Classification using Graph Neural Networks},
+  year = {2025},
+  isbn = {9798400706295},
+  publisher = {Association for Computing Machinery},
+  address = {New York, NY, USA},
+  booktitle = {Proceedings of the 40th ACM/SIGAPP Symposium on Applied Computing},
+  pages = {645–647},
+  numpages = {3}
+}
