@@ -51,8 +51,6 @@ After building the graph, run the following command to train the model:
 
 The following arguments allow the modification of the training parameters:
 
-The following arguments allow the modification of the GNN's hyperparameters:
-
 - `--model`
 
   Select the GNN used for training.
