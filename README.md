@@ -17,7 +17,113 @@ This code was implemented using Python 3.11.5, CUDA 12.2 and the following packa
 
 ## How to run the code
 
-Coming soon.
+### Build Graph
+In order to use our method, first build the graph you wanna perform text classification using the following command:
+
+    $ python build_graph.py --dataset <dataset_name> --threshold <threshold_for_edge_prunning>
+
+More info about the edge prunning is available in Table 2 of our paper.
+
+The following arguments allow the modification of the script's parameters:
+
+- `--weight_type`
+
+    Defines what is the edge weighing strategy used to build the graph. The options are 'shared', 'overlap', and 'collab' for number of shared neighbors, jaccard index, and newman's collaboration model.
+  
+    Default: `shared`
+
+- `--transformer_embeddings`
+
+    Use this flag if you wanna use sentence transformer embeddings instead of GloVe embeddings.
+  
+    Default: `True`
+
+- `--val_split`
+
+    Defines the percentage of nodes used for validation.
+
+    Default: `0.1`
+
+### Model training
+After building the graph, run the following command to train the model:
+
+    $ python train.py --dataset <dataset_name> --weight_type <weight_type_used_to_build_graph> --threshold <threshold_used_to_build_graph>
+
+The following arguments allow the modification of the training parameters:
+
+The following arguments allow the modification of the GNN's hyperparameters:
+
+- `--model`
+
+  Select the GNN used for training.
+
+  Default: `GCN`
+  
+- `--lr`
+
+    Modifies the model's learning rate.
+  
+    Default: `1e-3`
+
+- `--batch_size`
+
+    Controls our method's batch size.
+  
+    Default: `32`
+
+- `--hidden_dim`
+
+    GNN hidden dimension size. 
+
+    Default: `256`
+
+- `--n_epochs`
+
+    Number of training epochs.
+
+    Default: `200`
+
+- `--weight_decay`
+
+    Weight decay used during training.
+  
+    Default: `0`
+
+- `--dropout`
+
+    Dropout used during training.
+  
+    Default: `0`
+
+- `--sample_size`
+
+    Neighborhood sampling size per GNN layer. Set it to -11 to disable neighborhood sampling.
+  
+    Default: `-1`
+
+- `--emb_method`
+
+    Used to inform the script which embedding method was used to build the graph.
+  
+    Default: `glove`
+
+- `--patience`
+
+    Number of epochs without validation loss before early stopping.
+
+    Default: `30`
+
+- `--epoch_log`
+
+    Prints information about the network's training every <epoch_log> steps.
+
+    Default: `5`
+
+- `--cuda`
+
+    Trains the network using a GPU (if available).
+
+    Default: `true`
 
 ## Reference
 
