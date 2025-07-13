@@ -124,7 +124,7 @@ The following arguments allow the modification of the training parameters:
     Default: `true`
 
 ## Reference
-
+```
 @inbook{10.1145/3672608.3707879,
   author = {Roque dos Santos, N\'{\i}colas and Minatel, Diego and Dem\'{e}trius Baria Valejo, Alan and de Andrade Lopes, Alneu},
   title = {One-mode Projection of Bipartite Graphs for Text Classification using Graph Neural Networks},
@@ -136,3 +136,4 @@ The following arguments allow the modification of the training parameters:
   pages = {645–647},
   numpages = {3}
 }
+```
