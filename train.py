@@ -5,11 +5,11 @@ import numpy as np
 import wandb
 from pathlib import Path
 from sklearn.metrics import f1_score, accuracy_score
-from copy import deepcopy
 
 import torch
 from torch.nn import functional as F
 from torch_geometric.loader import NeighborLoader
+from torch_geometric.nn import APPNP
 
 from utils import *
 from args import *
@@ -79,17 +79,6 @@ def eval(loader, model, device, args):
 
 
 def exp(model, args, train_loader, val_loader, test_loader):
-    wandb.init(
-        config={
-            "threshold": f"{args.threshold}",
-            "dataset": f"{args.dataset}",
-            "weight_type": f"{args.weight_type}",
-            "model": f"{args.model}",
-            "sample_size": f"{args.sample_size}",
-            "args": args,
-        }
-    )
-
     device = torch.device("cpu")
     if args.cuda and torch.cuda.is_available():
         if args.gpu_id is None:
@@ -99,11 +88,10 @@ def exp(model, args, train_loader, val_loader, test_loader):
 
     model = model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-    
-    best_model = deepcopy(model.state_dict())
     best_val_loss = float('inf')
     early_stopping_count = 0
-    
+    best_model_str = args.models_dir + args.dataset + "_" + args.model + ".pt"
+
     for epoch in range(1, args.n_epochs + 1):
         if early_stopping_count == args.patience:
             print(f"early stopping on epoch {epoch}")
@@ -112,16 +100,7 @@ def exp(model, args, train_loader, val_loader, test_loader):
         loss, train_acc, train_f1 = train(train_loader, model, optimizer, device, args)
         val_loss, val_acc, val_f1 = eval(val_loader, model, device, args)
 
-        wandb.log({
-            "loss": loss,
-            "train_acc": train_acc,
-            "train_f1": train_f1,
-            "val_loss": val_loss,
-            "val_acc": val_acc,
-            "val_f1": val_f1
-        })
-
-        if epoch == 1 or epoch % args.epoch_log == 0:
+        if epoch == 1 or epoch % 50 == 0:
             print(
                 f"epoch {epoch}\tloss {loss:.4f}\tacc {train_acc:.4f}\tf1 {train_f1:.4f}"
                 f"\tval_loss {val_loss:.4f}\tval_acc {val_acc:.4f}\tval_f1 {val_f1:.4f}"
@@ -130,11 +109,11 @@ def exp(model, args, train_loader, val_loader, test_loader):
         if val_loss <= best_val_loss:
             early_stopping_count = 0
             best_val_loss = val_loss
-            best_model = deepcopy(model.state_dict())
+            torch.save(model.state_dict(), best_model_str)
         else:
             early_stopping_count += 1
 
-    model.load_state_dict(best_model)
+    model.load_state_dict(torch.load(best_model_str))
     test_loss, test_acc, test_f1 = eval(test_loader, model, device, args)
 
     return test_loss, test_acc, test_f1
@@ -148,8 +127,6 @@ def run_exp(args):
 
     args = load_configs(args)
     data_all = get_pyg_graph(args)
-
-    check_graph_properties(data_all)
 
     train_loader = NeighborLoader(
         data_all,
@@ -174,31 +151,29 @@ def run_exp(args):
         case "gcn":
             model = GCN(args.input_dim, args.output_dim, args.hidden_dim, args)
         case "sage":
-            #model = GraphSAGE(args.input_dim, args.output_dim, args.hidden_dim, args)
             model = WeightedGraphSAGE(args.input_dim, args.output_dim, args.hidden_dim, args)
         case "gat":
             model = GAT(args.input_dim, args.output_dim, args.hidden_dim, args.gat_heads)
+        case "appnp":
+            print("appnp")
+            model = MyAPPNP(args.input_dim, args.hidden_dim, args.output_dim, K=2)
+        case "chebynet":
+            print("chebynet")
+            model = MyChebyNet(args.input_dim, args.hidden_dim, args.output_dim, 2)
+        case "sgc":
+            print("sgc")
+            model = MySGC(args.input_dim, args.output_dim, 2)
         case _:
-            raise Exception("unsupported model. only gcn, gat, and graphsage supported.")
+            raise Exception("unsupported model. only gcn, gat, appnp, and graphsage supported.")
 
     Path(args.models_dir).mkdir(parents=True, exist_ok=True)
 
     test_loss, test_accuracy, test_f1 = exp(model, args, train_loader, val_loader, test_loader)
-    wandb.log({
-        "test_loss": test_loss,
-        "test_accuracy": test_accuracy,
-        "test_f1": test_f1
-    })
-        
-    # wandb.finish()
-    del data_all, train_loader, val_loader, test_loader
-
+    print(f"{test_loss}, {test_accuracy}, {test_f1}")
 
 if __name__ == "__main__":
     set_seed(42)
     args = args_train()
     print(args)
-
-    wandb.login()
 
     run_exp(args)
